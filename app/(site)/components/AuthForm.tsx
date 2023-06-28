@@ -2,19 +2,29 @@
 
 import Button from "@/app/components/common/button";
 import Input from "@/app/components/common/input";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import AuthSocialButton from "./AuthSocialButton";
 import { BsGithub, BsGoogle } from "react-icons/bs";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 type Variant = "LOGIN" | "REGISTER";
 
 function AuthForm() {
   const [variant, setVariant] = useState<Variant>("LOGIN");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const session = useSession();
+
+  useEffect(() => {
+    if (session?.status === "authenticated") {
+      router.push("/users");
+    }
+  }, [session?.status, router]);
 
   const toggleVariant = useCallback(() => {
     if (variant === "LOGIN") {
@@ -44,6 +54,8 @@ function AuthForm() {
         .post("/api/register", data)
         .then(() => {
           toast.success("User registered successfully!");
+
+          signIn("credentials", data);
         })
         .catch(() => {
           toast.error("Something went wrong");
@@ -54,13 +66,13 @@ function AuthForm() {
     if (variant === "LOGIN") {
       signIn("credentials", { ...data, redirect: false })
         .then((callback) => {
-          console.log("callback", callback);
           if (callback?.error) {
             toast.error("invalid credentials");
           }
 
           if (callback?.ok && !callback.error) {
             toast.success("Logged in successfully");
+            router.push("/users");
           }
         })
         .catch((error) => console.log("error", error))
@@ -70,6 +82,20 @@ function AuthForm() {
 
   const socialActions = (action: string) => {
     setLoading(true);
+
+    console.log("action", action);
+    signIn(action, { redirect: false })
+      .then((callback) => {
+        if (callback?.error) {
+          toast.error("invalid credentials");
+        }
+
+        if (callback?.ok && !callback.error) {
+          toast.success("Logged in successfully");
+        }
+      })
+      .catch((error) => console.log("error", error))
+      .finally(() => setLoading(false));
   };
 
   return (
@@ -131,7 +157,7 @@ function AuthForm() {
             />
             <AuthSocialButton
               icon={BsGoogle}
-              onClick={() => socialActions("github")}
+              onClick={() => socialActions("google")}
             />
           </div>
         </div>
