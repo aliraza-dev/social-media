@@ -1,7 +1,6 @@
 "use client";
 
 import Avatar from "@/app/components/Avatar";
-import Modal from "@/app/components/common/Modal";
 import useOtherUser from "@/app/hooks/useOtherUser";
 import { Dialog, Transition } from "@headlessui/react";
 import { Conversation, User } from "@prisma/client";
@@ -9,6 +8,9 @@ import { format } from "date-fns";
 import { Fragment, useMemo, useState } from "react";
 import { IoClose, IoTrash } from "react-icons/io5";
 import ConfirmModal from "./ConfirmModal";
+import AvatarGroup from "@/app/components/AvatarGroup";
+import Image from "next/image";
+import { Images } from "@/app/utils";
 
 interface ProfileDrawerProps {
   isOpen: boolean;
@@ -106,7 +108,11 @@ const ProfileDrawer: React.FC<ProfileDrawerProps> = ({
                       >
                         <div className="flex flex-col items-center">
                           <div className="mb-2">
-                            <Avatar user={otherUser} />
+                            {data.isGroup ? (
+                              <AvatarGroup users={data.users} />
+                            ) : (
+                              <Avatar user={otherUser} />
+                            )}
                           </div>
                           <div>{title}</div>
                           <div className="text-sm text-gray-500">
@@ -128,6 +134,32 @@ const ProfileDrawer: React.FC<ProfileDrawerProps> = ({
 
                           <div className="w-full pb-5 pt-5 sm:px-0 sm:pt-0">
                             <dl className="space-y-8 px-4 sm:y-6 sm:px-6">
+                              {data.isGroup && (
+                                <div>
+                                  <dt className="text-sm font-medium text-gray-500 sm:w-40 sm:flex-shrink-0">
+                                    Emails
+                                  </dt>
+                                  <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 flex flex-wrap">
+                                    {data.users.map((user) => (
+                                      <div
+                                        key={user.id}
+                                        className="
+                                        rounded w-auto bg-gray-100 mb-1 mr-1 p-1 flex"
+                                      >
+                                        <Image
+                                          alt="avatar"
+                                          src={user.image || Images.placeholder}
+                                          width="18"
+                                          height="18"
+                                          className="rounded-full mr-2"
+                                        />
+                                        {user.email}
+                                      </div>
+                                    ))}
+                                  </dd>
+                                </div>
+                              )}
+
                               {!data.isGroup && (
                                 <div>
                                   <dt className="text-sm font-medium text-gray-500 sm:w-40 sm:flex-shrink-0">
